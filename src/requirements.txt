@@ -1,0 +1,6 @@
+tensorflow
+ray[default]
+## old version does not suffer missing numpy.ndarray 'keys' attribute
+ray[rllib]==1.6.0
+pyglet
+gputil
