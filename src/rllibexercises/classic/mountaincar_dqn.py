@@ -63,8 +63,7 @@ def main():
     
     best_seed = args.seed
     best_iters = 5000
-    best_layers = [ 32, 8 ]
-#     best_layers = [ 16, 4 ]
+    best_layers = [ 16, 4 ]
 #     best_learning = 0.0005
     metrics_smooth_size=100
     metrics_stop_condition = {
