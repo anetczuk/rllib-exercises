@@ -118,20 +118,88 @@ def list_trainers():
 ## =================================================================
 
 
+def calculate_reward_stats( n, result ):
+#     iter_rewards_num = result['episodes_this_iter']
+#      
+#     ### it seems that statistic results (e.g. result['episode_reward_min']) are not accurate
+#     ### and spans results from multiple training iterations
+#     iter_rewards = result['hist_stats']['episode_reward'][-iter_rewards_num:]
+#      
+# #         print("rewards:", iter_rewards_num, iter_rewards )
+#     rewards_min  = min( iter_rewards )
+#     rewards_max  = max( iter_rewards )
+#     rewards_mean = numpy.mean( iter_rewards )
+     
+    ## RL way -- based on 'metrics_smoothing_episodes' config value   
+    rewards_min  = result['episode_reward_min']
+    rewards_max  = result['episode_reward_max']
+    rewards_mean = result['episode_reward_mean']
+    
+    episode = {'iter': n, 
+               'episode_reward_min':  rewards_min, 
+               'episode_reward_mean': rewards_mean, 
+               'episode_reward_max':  rewards_max
+               }
+    
+    return episode
+
+
+def print_results( result ):
+    train_result = result.copy()
+#         del result['config']
+    train_result['config'] = None
+    print( "" )
+    pprint.pprint( train_result )
+#         results.append( result )
+
+
+def concat_params( algorithm, layers, customParams, itersNumber, seed ):
+    params = "alg: {} layers: {}".format( algorithm, layers )
+    if customParams is not None and len( customParams ) > 0:
+        params += " " + customParams
+    params += " iters: {:05d} seed: 0x{:X}".format( itersNumber, seed )
+    return params
+
+
+def draw_plot( plot_fig, subplot, episode_data, envName, params ):
+    if len(episode_data) < 2:
+        return
+    df = pd.DataFrame( data=episode_data )
+    subplot.clear()
+    subplot.locator_params( integer=True )
+#             df.plot( ax=subplot, title=envName + ":\n" + params, x="iter", y=["episode_reward"] )
+    df.plot( ax=subplot, title=envName + ":\n" + params, x="iter", y=["episode_reward_min", "episode_reward_mean", "episode_reward_max"] )
+#             plot_fig.canvas.draw()
+    plot_fig.canvas.flush_events()
+#             plot.process_events( 0.1 )
+
+
 # n_iter -- number of training runs.
-def learn( envName, algorithm, layers_size, n_iter=32, seed=None, framework="tf", specific_config=None, custom_params="" ):
+def learn( envName, algorithm, layers_size, n_iter=32, metrics_stop_condition=None, seed=None, framework="tf", specific_config=None, custom_params="",
+           metrics_smooth_size=None ):
     start_time = datetime.now()
     
     checkpoint_root = os.path.abspath( os.path.join( TMP_DIR, "run", envName ) )
+    checkpoint_video = os.path.abspath( os.path.join( checkpoint_root, "video" ) )
+    checkpoint_model = os.path.abspath( os.path.join( checkpoint_root, "model" ) )
+    
     os.makedirs( checkpoint_root, exist_ok=True )
+    os.makedirs( checkpoint_video, exist_ok=True )
+    os.makedirs( checkpoint_model, exist_ok=True )
     
     AlgTrainer = load_algorithm( algorithm )
+#     pprint.pprint( dir(AlgTrainer) )
     
     print( "running algorithm:", algorithm )
 
     if seed is None:
         seed = numpy.random.randint( 0, 2**32 - 1 )
     print( "random seed:", seed )
+    
+    if metrics_smooth_size is None or metrics_smooth_size < 1:
+        metrics_smooth_size = max( int(n_iter / 20), 1 )
+    print( "metrics smoothing window size:", metrics_smooth_size )
+    
     
 #     config = DEFAULT_CONFIG.copy()
     config = AlgTrainer._default_config.copy()
@@ -150,16 +218,20 @@ def learn( envName, algorithm, layers_size, n_iter=32, seed=None, framework="tf"
           "fcnet_hiddens": layers_size,
 #           "fcnet_activation": "tanh",
         },
+        'metrics_smoothing_episodes': metrics_smooth_size,
         "num_gpus": 0,
         "num_cpus_per_worker": 0,               # This avoids running out of resources in the notebook environment when this cell is re-executed
 #        "train_batch_size": 100,
 #         "rollout_fragment_length": 1
     }
     config.update( common_config )
+    
+    config['env'] = envName
 
     eval_config = {
         # Evaluate once per training iteration.
-        "evaluation_interval": n_iter,
+        "evaluation_interval": 9999999999,                      ## disable automatic evaluation and trigger it explicit
+#         "evaluation_interval": n_iter,
         # Run evaluation on (at least) two episodes
         "evaluation_num_episodes": 2,
         # ... using one evaluation worker (setting this to 0 will cause
@@ -174,7 +246,7 @@ def learn( envName, algorithm, layers_size, n_iter=32, seed=None, framework="tf"
             # Alternatively, you can specify an absolute path.
             # Set to True for using the default output dir (~/ray_results/...).
             # Set to False for not recording anything.
-            "record_env": checkpoint_root,
+            "record_env": checkpoint_video,
   
             # Render the env while evaluating.
             # Note that this will always only render the 1st RolloutWorker's
@@ -198,34 +270,26 @@ def learn( envName, algorithm, layers_size, n_iter=32, seed=None, framework="tf"
 
     pprint.pprint( config )
     
-    params = "alg: {} layers: {}".format( algorithm, layers_size )
-    if custom_params is not None and len( custom_params ) > 0:
-        params += " " + custom_params
-    params += " iters: {} seed: 0x{:X}".format( n_iter, seed )
+    params = ""
     
     print( "\ncreating agent" )
     agent = AlgTrainer( config=config, env=envName )
     
-#     results = []
     episode_data = []
-#     episode_json = []
 
     pyplot.ion()
     ## ax is 'Line2D'
     plot_fig, ax = pyplot.subplots()
     subplot = ax.axes                   ## of type 'AxesSubplot'
-        
+    
+    result = None
     print( "\ntraining:" )
     for n in range(1, n_iter+1):
         result = agent.train()
         
-#         train_result = result.copy()
-# #         del result['config']
-#         train_result['config'] = None
-#         print( "" )
-#         pprint.pprint( train_result )
-# #         results.append( result )
+#         print_results( result )
         
+#         print( "ooooooo:", result['timesteps_total'], result['timesteps_total'] )
 #         print( "ooooooo:", len( result['hist_stats']['episode_lengths'] ) )
         
         if result['episodes_total'] is None:
@@ -237,48 +301,47 @@ def learn( envName, algorithm, layers_size, n_iter=32, seed=None, framework="tf"
             print( f'{n:3d}: no results (episodes_this_iter < 1)' )
             continue
         
-        ### it seems that statistic results (e.g. result['episode_reward_min']) are not accurate
-        ### and spans results from multiple training iterations
-        iter_rewards = result['hist_stats']['episode_reward'][-iter_rewards_num:]
-#         print("rewards:", iter_rewards_num, iter_rewards )
-        rewards_min  = min( iter_rewards )
-        rewards_max  = max( iter_rewards )
-        rewards_mean = numpy.mean( iter_rewards )
-        
-#         rewards_min  = result['episode_reward_min']
-#         rewards_max  = result['episode_reward_max']
-#         rewards_mean = result['episode_reward_mean']
-        
-#         episode = {'iter': n, 
-#                    'episode_reward':  result['hist_stats']['episode_reward'][-1], 
-#                    }
-        
-        episode = {'iter': n, 
-                   'episode_reward_min':  rewards_min, 
-                   'episode_reward_mean': rewards_mean, 
-                   'episode_reward_max':  rewards_max
-                   }
+        episode = calculate_reward_stats( n, result )
 
         episode_data.append( episode )
-#         episode_json.append( json.dumps(episode) )
-#         file_name = agent.save(checkpoint_root)
+#         file_name = agent.save( checkpoint_model )
+        
+        rewards_min  = episode['episode_reward_min']
+        rewards_max  = episode['episode_reward_max']
+        rewards_mean = episode['episode_reward_mean']
+
+        elapsed_time = datetime.now() - start_time
+
+        recent_reward = result['hist_stats']['episode_reward'][-1:][0]
+        
+        ep_done = result['done']
         
         ## agent_timesteps_total iterations_since_restore episodes_this_iter episodes_total done
-        
-        elapsed_time = datetime.now() - start_time
-        
-        print( f'{n:3d}: Min/Mean/Max reward: {rewards_min:8.4f}/{rewards_mean:8.4f}/{rewards_max:8.4f} episodes_this_iter: {iter_rewards_num} elapsed: {elapsed_time}' )
+        print( f'{n:3d}: Recent/Min/Mean/Max reward: {recent_reward:8.4f}/{rewards_min:8.4f}/{rewards_mean:8.4f}/{rewards_max:8.4f} episodes_this_iter: {iter_rewards_num} elapsed: {elapsed_time} done: {ep_done}' )
 #         print(f'{n:3d}: Min/Mean/Max reward: {result["episode_reward_min"]:8.4f}/{result["episode_reward_mean"]:8.4f}/{result["episode_reward_max"]:8.4f}. Checkpoint saved to {file_name}')
 
-        if len(episode_data) > 1:
-            df = pd.DataFrame( data=episode_data )
-            subplot.clear()
-            subplot.locator_params( integer=True )
-#             df.plot( ax=subplot, title=envName + ":\n" + params, x="iter", y=["episode_reward"] )
-            df.plot( ax=subplot, title=envName + ":\n" + params, x="iter", y=["episode_reward_min", "episode_reward_mean", "episode_reward_max"] )
-#             plot_fig.canvas.draw()
-            plot_fig.canvas.flush_events()
-#             plot.process_events( 0.1 )
+        params = concat_params( algorithm, layers_size, custom_params, n, seed )
+
+        if (n % 10 == 0):
+            draw_plot( plot_fig, subplot, episode_data, envName, params )
+#             df = pd.DataFrame( data=episode_data )
+#             subplot.clear()
+#             subplot.locator_params( integer=True )
+# #             df.plot( ax=subplot, title=envName + ":\n" + params, x="iter", y=["episode_reward"] )
+#             df.plot( ax=subplot, title=envName + ":\n" + params, x="iter", y=["episode_reward_min", "episode_reward_mean", "episode_reward_max"] )
+# #             plot_fig.canvas.draw()
+#             plot_fig.canvas.flush_events()
+# #             plot.process_events( 0.1 )
+
+        if metrics_stop_condition is not None and rewards_min > metrics_stop_condition:
+            break 
+
+    ## redraw plot before evaluation
+    draw_plot( plot_fig, subplot, episode_data, envName, params )
+
+    agent.evaluate()
+
+#     print_results( result )
 
     execution_time = datetime.now() - start_time
 
@@ -295,12 +358,21 @@ def learn( envName, algorithm, layers_size, n_iter=32, seed=None, framework="tf"
 #     print( model.base_model.summary() )
     
     print( params )
-    print( "duration: {}\n".format( execution_time ) )
     
     fileName = params
     fileName = fileName.replace( ", ", "_" )
     fileName = fileName.replace( ": ", "-" )
     fileName = fileName.replace( ":", "-" )
     fileName = fileName.replace( " ", "_" )
+    
+    agentDataPath = agent.save( checkpoint_model )
+    print( "agent state stored to", agentDataPath )
+    
+    cfgOutput = os.path.abspath( os.path.join( checkpoint_root, fileName + ".cfg" ) )
+    with open( cfgOutput, 'wt') as cfgOut:
+        pprint.pprint( config, stream=cfgOut )
+        
+    print( "duration: {}\n".format( execution_time ) )
+    
     figOutput = os.path.abspath( os.path.join( checkpoint_root, fileName + ".png" ) )
     plot_fig.savefig( figOutput )
