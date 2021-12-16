@@ -8,11 +8,10 @@ Exercises are done using *RLlib* version 1.6.0.
 ## Table of content
 
  1. [Project configuration](#project_configuration)
- 6. [Solutions](#solutions)
-     1. [acrobot](#solution_acrobot)
- 7. [PyBrain limitations](#pybrain_limitations)
- 8. [Alternative machine learning libraries](#alternative_libs)
- 9. [References](#references)
+ 2. [Solutions](#solutions)
+     1. [CartPole-v1](#solution_cartpole)
+     2. [MountainCar-v0](#solution_mountaincar)
+ 3. [References](#references)
 
 
 ## <a name="project_configuration"></a>Project configuration
@@ -24,7 +23,7 @@ Starting environment can be done by execution of script `venv/activatevenv.sh`.
 
 ## <a name="solutions"></a>Solutions
 
-### <a name="solution_acrobot"></a>cart pole
+### <a name="solution_cartpole"></a>CartPole-v1
 
 [![CartPole-v1 PG](doc/solution/classic/cartpole-v1/cartpole-v1-pg-small.png "CartPole-v1 PG")](doc/solution/classic/cartpole-v1/cartpole-v1-pg.png)
 [![CartPole-v1 PG](doc/solution/classic/cartpole-v1/cartpole-v1-pg-small.gif "CartPole-v1 PG")](doc/solution/classic/cartpole-v1/cartpole-v1-pg.mp4)
@@ -43,6 +42,26 @@ Training input config: [input config](doc/solution/classic/cartpole-v1/cartpole-
 Trained agent can be found [here](doc/solution/classic/cartpole-v1/cartpole-v1-pg-agent.zip)
 
 Run command: `./src/rllibexercises/classic/cartpole_pg.py --seed=0xB36EF169`
+
+### <a name="solution_mountaincar"></a>MountainCar-v0
+
+[![MountainCar-v0 DQN](doc/solution/classic/mountaincar-v0/mountaincar-v0-dqn-small.png "MountainCar-v0 DQN")](doc/solution/classic/mountaincar-v0/mountaincar-v0-dqn.png)
+[![MountainCar-v0 DQN](doc/solution/classic/mountaincar-v0/mountaincar-v0-dqn-small.gif "MountainCar-v0 DQN")](doc/solution/classic/mountaincar-v0/mountaincar-v0-dqn.mp4)
+
+Meta parameters:
+- algorithm: *Deep Q Networks (DQN)*
+- model: neural network with two fully connected layers of size 16 and 4 respectively
+- learning rate: 0.0005
+- training steps: 117
+- seed: 0x88E30E1D
+
+Algorithm took 0:06:09 to train.
+
+Training input config: [input config](doc/solution/classic/mountaincar-v0/mountaincar-v0-dqn.cfg)
+
+Trained agent can be found [here](doc/solution/classic/mountaincar-v0/mountaincar-v0-dqn-agent.zip)
+
+Run command: `./src/rllibexercises/classic/mountaincar-dqn.py --seed=0x88E30E1D`
 
 
 ## References:

@@ -32,7 +32,7 @@ def int_hex_dec(x):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Cart pole solution')
+    parser = argparse.ArgumentParser(description=ENV_NAME+' solution')
     parser.add_argument( '--seed', action="store", type=int_hex_dec, default=None, help='RNG seed (dec or hex)' )
     
     args = parser.parse_args()
@@ -51,15 +51,16 @@ def main():
     best_layers = [64, 32]
     best_iters = 5000
     best_learning = 0.0006
+    metrics_smooth_size=100
     metrics_stop_condition = 490
-    custom_params = ""
+#     custom_params = ""
 
 #     trainer.learn( ENV_NAME, "PG", layers_size=best_layers, n_iter=best_iters, seed=best_seed, specific_config=specific_config )
 
     specific_config['lr'] = best_learning
     custom_params = "lr: {:.5f}".format( best_learning )
     trainer.learn( ENV_NAME, "PG", layers_size=best_layers, 
-                   n_iter=best_iters, metrics_stop_condition=metrics_stop_condition, metrics_smooth_size=100,
+                   n_iter=best_iters, metrics_stop_condition=metrics_stop_condition, metrics_smooth_size=metrics_smooth_size,
                    seed=best_seed, specific_config=specific_config, custom_params=custom_params )
    
     execution_time = datetime.now() - start_time

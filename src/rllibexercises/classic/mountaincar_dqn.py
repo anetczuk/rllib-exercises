@@ -12,6 +12,7 @@ except ImportError as error:
 
 import os
 from datetime import datetime
+import argparse
 
 import matplotlib.pyplot as pyplot
 # import plot
@@ -26,7 +27,17 @@ os.environ["RAY_DISABLE_IMPORT_WARNING"] = "1"
 ENV_NAME = "MountainCar-v0"
 
 
+def int_hex_dec(x):
+    return int(x, 0)
+
+
 def main():
+    parser = argparse.ArgumentParser(description=ENV_NAME+' solution')
+    parser.add_argument( '--seed', action="store", type=int_hex_dec, default=None, help='RNG seed (dec or hex)' )
+    
+    args = parser.parse_args()
+    
+    ## preparing and training
     start_time = datetime.now()
 
 # "CQL"                  ## AttributeError: 'Categorical' object has no attribute 'sample_logp'
@@ -43,11 +54,30 @@ def main():
     ## working with good results
     ## "DQN", "SimpleQ"
     
-    best_seed = None
-    best_iters = 100
-    best_layers = [ 16, 4 ]
+    specific_config = {
+        'batch_mode': 'complete_episodes',
+#         'lr': 0.001,
+#         'rollout_fragment_length': 500,
+#         'train_batch_size': 200
+    }
+    
+    best_seed = args.seed
+    best_iters = 5000
+    best_layers = [ 32, 8 ]
+#     best_layers = [ 16, 4 ]
+#     best_learning = 0.0005
+    metrics_smooth_size=100
+    metrics_stop_condition = {
+        'limit': -110.0,
+        'metrics': 'avg'
+    }
+    custom_params = ""
 
-    trainer.learn( ENV_NAME, "DQN", layers_size=best_layers, n_iter=best_iters, seed=best_seed )
+#     specific_config['lr'] = best_learning
+#     custom_params = "lr: {:.5f}".format( best_learning )
+    trainer.learn( ENV_NAME, "DQN", layers_size=best_layers, 
+                   n_iter=best_iters, metrics_stop_condition=metrics_stop_condition, metrics_smooth_size=metrics_smooth_size,
+                   seed=best_seed, draw_interval=3, custom_params=custom_params )
 
     execution_time = datetime.now() - start_time
     print( "total duration: {}\n".format( execution_time ) )

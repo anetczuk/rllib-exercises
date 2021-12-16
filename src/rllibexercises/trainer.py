@@ -5,6 +5,7 @@
 import os
 from datetime import datetime
 import pprint
+import numbers
 
 import numpy
 import pandas as pd
@@ -176,12 +177,16 @@ def draw_plot( plot_fig, subplot, episode_data, envName, params ):
 
 # n_iter -- number of training runs.
 def learn( envName, algorithm, layers_size, n_iter=32, metrics_stop_condition=None, seed=None, framework="tf", specific_config=None, custom_params="",
-           metrics_smooth_size=None ):
+           metrics_smooth_size=None, draw_interval=10 ):
     start_time = datetime.now()
     
+    if seed is None:
+        seed = numpy.random.randint( 0, 2**32 - 1 )
+    print( "random seed:", seed )
+    
     checkpoint_root = os.path.abspath( os.path.join( TMP_DIR, "run", envName ) )
-    checkpoint_video = os.path.abspath( os.path.join( checkpoint_root, "video" ) )
-    checkpoint_model = os.path.abspath( os.path.join( checkpoint_root, "model" ) )
+    checkpoint_video = os.path.abspath( os.path.join( checkpoint_root, "video", hex(seed) ) )
+    checkpoint_model = os.path.abspath( os.path.join( checkpoint_root, "model", hex(seed) ) )
     
     os.makedirs( checkpoint_root, exist_ok=True )
     os.makedirs( checkpoint_video, exist_ok=True )
@@ -192,11 +197,14 @@ def learn( envName, algorithm, layers_size, n_iter=32, metrics_stop_condition=No
     
     print( "running algorithm:", algorithm )
 
-    if seed is None:
-        seed = numpy.random.randint( 0, 2**32 - 1 )
-    print( "random seed:", seed )
+    if metrics_stop_condition is not None:
+        if isinstance(metrics_stop_condition, numbers.Number):
+            metrics_stop_condition = {
+                'limit': metrics_stop_condition,
+                'metrics': 'min'
+            }
     
-    if metrics_smooth_size is None or metrics_smooth_size < 1:
+    if metrics_smooth_size is not None and metrics_smooth_size < 1:
         metrics_smooth_size = max( int(n_iter / 20), 1 )
     print( "metrics smoothing window size:", metrics_smooth_size )
     
@@ -218,7 +226,6 @@ def learn( envName, algorithm, layers_size, n_iter=32, metrics_stop_condition=No
           "fcnet_hiddens": layers_size,
 #           "fcnet_activation": "tanh",
         },
-        'metrics_smoothing_episodes': metrics_smooth_size,
         "num_gpus": 0,
         "num_cpus_per_worker": 0,               # This avoids running out of resources in the notebook environment when this cell is re-executed
 #        "train_batch_size": 100,
@@ -227,13 +234,15 @@ def learn( envName, algorithm, layers_size, n_iter=32, metrics_stop_condition=No
     config.update( common_config )
     
     config['env'] = envName
+    if metrics_smooth_size is not None:
+        config['metrics_smoothing_episodes'] = metrics_smooth_size
 
     eval_config = {
         # Evaluate once per training iteration.
         "evaluation_interval": 9999999999,                      ## disable automatic evaluation and trigger it explicit
 #         "evaluation_interval": n_iter,
         # Run evaluation on (at least) two episodes
-        "evaluation_num_episodes": 2,
+        "evaluation_num_episodes": 3,
         # ... using one evaluation worker (setting this to 0 will cause
         # evaluation to run on the local evaluation worker, blocking
         # training until evaluation is done).
@@ -322,7 +331,7 @@ def learn( envName, algorithm, layers_size, n_iter=32, metrics_stop_condition=No
 
         params = concat_params( algorithm, layers_size, custom_params, n, seed )
 
-        if (n % 10 == 0):
+        if (n % draw_interval == 0):
             draw_plot( plot_fig, subplot, episode_data, envName, params )
 #             df = pd.DataFrame( data=episode_data )
 #             subplot.clear()
@@ -333,8 +342,18 @@ def learn( envName, algorithm, layers_size, n_iter=32, metrics_stop_condition=No
 #             plot_fig.canvas.flush_events()
 # #             plot.process_events( 0.1 )
 
-        if metrics_stop_condition is not None and rewards_min > metrics_stop_condition:
-            break 
+        if metrics_stop_condition is not None:
+            if metrics_stop_condition['metrics'] == 'min':
+                if rewards_min > metrics_stop_condition['limit']:
+                    break
+            elif metrics_stop_condition['metrics'] == 'max':
+                if rewards_max > metrics_stop_condition['limit']:
+                    break
+            elif metrics_stop_condition['metrics'] == 'avg':
+                if rewards_mean > metrics_stop_condition['limit']:
+                    break
+            else:
+                raise ValueError( 'invalid value: ' + metrics_stop_condition['metrics'] )
 
     ## redraw plot before evaluation
     draw_plot( plot_fig, subplot, episode_data, envName, params )
