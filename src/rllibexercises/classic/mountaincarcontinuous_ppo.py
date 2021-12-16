@@ -12,6 +12,7 @@ except ImportError as error:
 
 import os
 from datetime import datetime
+import argparse
 
 import matplotlib.pyplot as pyplot
 # import plot
@@ -26,7 +27,17 @@ os.environ["RAY_DISABLE_IMPORT_WARNING"] = "1"
 ENV_NAME = "MountainCarContinuous-v0"
 
 
+def int_hex_dec(x):
+    return int(x, 0)
+
+
 def main():
+    parser = argparse.ArgumentParser(description=ENV_NAME+' solution')
+    parser.add_argument( '--seed', action="store", type=int_hex_dec, default=None, help='RNG seed (dec or hex)' )
+    
+    args = parser.parse_args()
+    
+    ## preparing and training
     start_time = datetime.now()
 
 # "CQL"                  ## AssertionError
@@ -51,55 +62,39 @@ def main():
     ## ApexDDPG                           episode takes  ~1 min
     
     MARWIL_config = {
+        'batch_mode': 'complete_episodes',
         "num_gpus": 0,
-        'lr': 0.1,
-        'rollout_fragment_length': 5000,
+#         'rollout_fragment_length': 5000,
 #         'train_batch_size': 1
 #         'rollout_fragment_length': 1,
 #         'train_batch_size': 1,
     }
-    custom_configs = { "MARWIL": MARWIL_config }
+    PPO_config = {
+        'batch_mode': 'complete_episodes',
+        "num_gpus": 0,
+    }
+    custom_configs = { "MARWIL": MARWIL_config, "PPO": PPO_config }
     
     best_alg = "PPO"
-    best_seed = None
-    best_iters = 100
+    best_seed = args.seed
+    best_iters = 5000
     best_layers = [ 16, 4 ]
-#     best_layers = [ 32, 8 ]
-#    best_layers = [ 128, 32 ]
-#     best_layers = [ 512, 512, 512 ]
-    best_learning = 0.02
+    best_learning = 0.02            ## default is 5e-5
+    metrics_smooth_size=100
+    metrics_stop_condition = {
+        'limit': 90.0,
+        'metrics': 'min'
+    }
+    custom_params = ""
 
     specific_config = custom_configs.get( best_alg, {} ).copy()
     specific_config['lr'] = best_learning
-    param = "lr: {:.5f}".format( best_learning )
+    custom_params = "lr: {:.5f}".format( best_learning )
     
-    trainer.learn( ENV_NAME, best_alg, layers_size=best_layers, n_iter=best_iters, seed=best_seed, specific_config=specific_config, custom_params=param )
+    trainer.learn( ENV_NAME, best_alg, layers_size=best_layers, 
+                   n_iter=best_iters, metrics_stop_condition=metrics_stop_condition, metrics_smooth_size=metrics_smooth_size, 
+                   seed=best_seed, specific_config=specific_config, draw_interval=5, custom_params=custom_params )
 
-# #     layers = [ [8], [16], [32], [48], [64], [96], [128], [192], [256] ]
-#     layers = [ [16, 4], [32, 8], [48, 12], [64, 16], [96, 24], [128, 32], [192, 48], [256, 64] ]
-#     for net in layers:
-#         trainer.learn( ENV_NAME, best_alg, layers_size=net, n_iter=best_iters, seed=best_seed, 
-#                        specific_config=specific_config, custom_params=param )
-
-    ## for PPO
-    #learning_rate = [ 0.001, 0.006, 0.01, 0.06, 0.1 ]
-    #learning_rate = [ 0.002, 0.007, 0.02, 0.07, 0.2 ]
-    #learning_rate = [ 0.07, 0.2 ]
-    
-#     specific_config = custom_configs.get( best_alg, {} )
-# #     learning_rate = [ 0.001, 0.006, 0.01, 0.06, 0.1, 0.6, 1.0, 6.0, 11.0 ]
-#     learning_rate = [ 0.6, 1.0, 6.0, 11.0 ]
-#     for learning in learning_rate:
-#         specific_config['lr'] = learning
-#         param = "lr: {:.5f}".format( learning )
-#         trainer.learn( ENV_NAME, best_alg, layers_size=best_layers, n_iter=best_iters, seed=best_seed, 
-#                        specific_config=specific_config, custom_params=param )
-
-#     layers = [ [8], [16], [32], [48], [64], [96], [128], [192], [256] ]
-# #     layers = [ [16, 4], [32, 8], [48, 12], [64, 16], [96, 24], [128, 32], [192, 48], [256, 64] ]
-#     for net in layers:
-#         trainer.learn( ENV_NAME, "Impala", layers_size=net, n_iter=best_iters, seed=best_seed )
-    
     execution_time = datetime.now() - start_time
     print( "total duration: {}\n".format( execution_time ) )
     

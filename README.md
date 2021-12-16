@@ -11,6 +11,7 @@ Exercises are done using *RLlib* version 1.6.0.
  2. [Solutions](#solutions)
      1. [CartPole-v1](#solution_cartpole)
      2. [MountainCar-v0](#solution_mountaincar)
+     2. [MountainCarContinuous-v0](#solution_mountaincarcontinuous)
  3. [References](#references)
 
 
@@ -62,6 +63,26 @@ Training input config: [input config](doc/solution/classic/mountaincar-v0/mounta
 Trained agent can be found [here](doc/solution/classic/mountaincar-v0/mountaincar-v0-dqn-agent.zip)
 
 Run command: `./src/rllibexercises/classic/mountaincar-dqn.py --seed=0x88E30E1D`
+
+### <a name="solution_mountaincarcontinuous"></a>MountainCarContinuous-v0
+
+[![MountainCarContinuous-v0 PPO](doc/solution/classic/mountaincarcontinuous-v0/mountaincarcontinuous-v0-ppo-small.png "MountainCarContinuous-v0 PPO")](doc/solution/classic/mountaincarcontinuous-v0/mountaincarcontinuous-v0-ppo.png)
+[![MountainCarContinuous-v0 PPO](doc/solution/classic/mountaincarcontinuous-v0/mountaincarcontinuous-v0-ppo-small.gif "MountainCarContinuous-v0 PPO")](doc/solution/classic/mountaincarcontinuous-v0/mountaincarcontinuous-v0-ppo.mp4)
+
+Meta parameters:
+- algorithm: *Proximal Policy Optimization (PPO)*
+- model: neural network with two fully connected layers of size 16 and 4 respectively
+- learning rate: 0.02
+- training steps: 20
+- seed: 0xA5CE3553
+
+Algorithm took 0:02:07 to train.
+
+Training input config: [input config](doc/solution/classic/mountaincarcontinuous-v0/mountaincarcontinuous-v0-ppo.cfg)
+
+Trained agent can be found [here](doc/solution/classic/mountaincarcontinuous-v0/mountaincarcontinuous-v0-ppo-agent.zip)
+
+Run command: `./src/rllibexercises/classic/mountaincarcontinuous-ppo.py --seed=0xA5CE3553`
 
 
 ## References:
