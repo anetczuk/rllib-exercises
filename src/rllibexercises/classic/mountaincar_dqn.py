@@ -55,10 +55,7 @@ def main():
     ## "DQN", "SimpleQ"
     
     specific_config = {
-        'batch_mode': 'complete_episodes',
-#         'lr': 0.001,
-#         'rollout_fragment_length': 500,
-#         'train_batch_size': 200
+#         'batch_mode': 'complete_episodes',
     }
     
     best_seed = args.seed
@@ -76,7 +73,7 @@ def main():
 #     custom_params = "lr: {:.5f}".format( best_learning )
     trainer.learn( ENV_NAME, "DQN", layers_size=best_layers, 
                    n_iter=best_iters, metrics_stop_condition=metrics_stop_condition, metrics_smooth_size=metrics_smooth_size,
-                   seed=best_seed, draw_interval=3, custom_params=custom_params )
+                   seed=best_seed, specific_config=specific_config, draw_interval=3, custom_params=custom_params )
 
     execution_time = datetime.now() - start_time
     print( "total duration: {}\n".format( execution_time ) )
