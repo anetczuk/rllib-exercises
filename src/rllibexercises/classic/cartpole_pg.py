@@ -42,9 +42,6 @@ def main():
     
     specific_config = {
         'batch_mode': 'complete_episodes',
-#         'lr': 0.001,
-#         'rollout_fragment_length': 500,
-#         'train_batch_size': 200
     }
     
     best_seed = args.seed
@@ -67,6 +64,36 @@ def main():
     print( "total duration: {}\n".format( execution_time ) )
     
     pyplot.show( block=True )
+
+# import ray
+# from ray.rllib.agents.ppo import PPOTrainer
+# 
+# 
+# def main():
+#     config = {
+#         "env": "CartPole-v0",
+#         "framework": "tf2",
+#         "model": {
+#           "fcnet_hiddens": [32],
+#           "fcnet_activation": "linear",
+#         },
+#     }
+#     stop = {"episode_reward_mean": 195}
+#     ray.shutdown()
+#     ray.init(
+#       num_cpus=3,
+#       include_dashboard=False,
+#       ignore_reinit_error=True,
+#       log_to_driver=False,
+#     )
+#     
+#     # execute training 
+#     analysis = ray.tune.run(
+#       "PPO",
+#       config=config,
+#       stop=stop,
+#       checkpoint_at_end=True,
+#     )
 
 
 if __name__ == '__main__':

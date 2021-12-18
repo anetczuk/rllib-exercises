@@ -64,10 +64,6 @@ def main():
     MARWIL_config = {
         'batch_mode': 'complete_episodes',
         "num_gpus": 0,
-#         'rollout_fragment_length': 5000,
-#         'train_batch_size': 1
-#         'rollout_fragment_length': 1,
-#         'train_batch_size': 1,
     }
     PPO_config = {
         'batch_mode': 'complete_episodes',
