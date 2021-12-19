@@ -11,7 +11,8 @@ Exercises are done using *RLlib* version 1.6.0.
  2. [Solutions](#solutions)
      1. [CartPole-v1](#solution_cartpole)
      2. [MountainCar-v0](#solution_mountaincar)
-     2. [MountainCarContinuous-v0](#solution_mountaincarcontinuous)
+     3. [MountainCarContinuous-v0](#solution_mountaincarcontinuous)
+     4. [Pendulum-v1](#solution_pendulum)
  3. [References](#references)
 
 
@@ -62,7 +63,7 @@ Training input config: [input config](doc/solution/classic/mountaincar-v0/mounta
 
 Trained agent can be found [here](doc/solution/classic/mountaincar-v0/mountaincar-v0-dqn-agent.zip)
 
-Run command: `./src/rllibexercises/classic/mountaincar-dqn.py --seed=0x88E30E1D`
+Run command: `./src/rllibexercises/classic/mountaincar_dqn.py --seed=0x88E30E1D`
 
 ### <a name="solution_mountaincarcontinuous"></a>MountainCarContinuous-v0
 
@@ -82,7 +83,27 @@ Training input config: [input config](doc/solution/classic/mountaincarcontinuous
 
 Trained agent can be found [here](doc/solution/classic/mountaincarcontinuous-v0/mountaincarcontinuous-v0-ppo-agent.zip)
 
-Run command: `./src/rllibexercises/classic/mountaincarcontinuous-ppo.py --seed=0xA5CE3553`
+Run command: `./src/rllibexercises/classic/mountaincarcontinuous_ppo.py --seed=0xA5CE3553`
+
+### <a name="solution_pendulum"></a>Pendulum-v1
+
+[![Pendulum-v1 TD3](doc/solution/classic/pendulum-v1/pendulum-v1-td3-small.png "Pendulum-v1 TD3")](doc/solution/classic/pendulum-v1/pendulum-v1-td3.png)
+[![Pendulum-v1 TD3](doc/solution/classic/pendulum-v1/pendulum-v1-td3-small.gif "Pendulum-v1 TD3")](doc/solution/classic/pendulum-v1/pendulum-v1-td3.mp4)
+
+Meta parameters:
+- algorithm: *Twin Delayed DDPG (TD3)*
+- model: neural network with fully connected layer of size 16
+- learning rate: 0.0001
+- training steps: 20
+- seed: 0XC5D33806
+
+Algorithm took 0:15:01 to train.
+
+Training input config: [input config](doc/solution/classic/pendulum-v1/pendulum-v1-td3.cfg)
+
+Trained agent can be found [here](doc/solution/classic/pendulum-v1/pendulum-v1-td3-agent.zip)
+
+Run command: `./src/rllibexercises/classic/pendulum_td3.py --seed=0xA5CE3553`
 
 
 ## References:
