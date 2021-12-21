@@ -57,7 +57,7 @@ def main():
     ## "TD3", "DDPG"
     
     specific_config = {
-        'batch_mode': 'complete_episodes',
+#         'batch_mode': 'complete_episodes',
     }
     
     best_seed = args.seed
@@ -78,7 +78,7 @@ def main():
     
     trainer.learn( ENV_NAME, "TD3", layers_size=best_layers, 
                    n_iter=best_iters, metrics_stop_condition=metrics_stop_condition, metrics_smooth_size=metrics_smooth_size,
-                   seed=best_seed, draw_interval=1, custom_params=custom_params )
+                   seed=best_seed, draw_interval=1, specific_config=specific_config, custom_params=custom_params )
 
 #    succeed_algs = [ "TD3", "DDPG" ]
 #     for alg in works:

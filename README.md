@@ -95,7 +95,7 @@ Meta parameters:
 - model: neural network with fully connected layer of size 16
 - learning rate: 0.0001
 - training steps: 20
-- seed: 0XC5D33806
+- seed: 0xC5D33806
 
 Algorithm took 0:15:01 to train.
 
@@ -103,7 +103,7 @@ Training input config: [input config](doc/solution/classic/pendulum-v1/pendulum-
 
 Trained agent can be found [here](doc/solution/classic/pendulum-v1/pendulum-v1-td3-agent.zip)
 
-Run command: `./src/rllibexercises/classic/pendulum_td3.py --seed=0xA5CE3553`
+Run command: `./src/rllibexercises/classic/pendulum_td3.py --seed=0xC5D33806`
 
 
 ## References:
